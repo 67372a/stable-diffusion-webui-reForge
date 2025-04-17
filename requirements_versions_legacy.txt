@@ -12,7 +12,7 @@ gradio==3.41.2
 httpcore==0.15
 inflection==0.5.1
 jsonmerge==1.9.2
-kornia==0.6.7
+kornia==0.8.0
 lark==1.2.2
 numpy==1.26.4
 omegaconf==2.2.3
