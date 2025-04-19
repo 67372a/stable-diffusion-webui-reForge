@@ -31,7 +31,7 @@ torch
 torchdiffeq==0.2.5
 torchsde==0.2.6
 transformers==4.44.0
-httpx==0.24.1
+httpx==0.28.1
 pillow-avif-plugin==1.4.6 
 albumentations==1.4.3
 git+https://github.com/pydantic/pydantic.git@464ed49b1f813103a49116476bec75a94492b338

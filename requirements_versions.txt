@@ -31,7 +31,7 @@ torch
 torchdiffeq==0.2.5
 torchsde==0.2.6
 transformers==4.50.3
-httpx==0.24.1
+httpx==0.28.1
 pillow-avif-plugin==1.4.6 
 albumentations==1.4.3
 https://github.com/Panchovix/pydantic-fixreforge/releases/download/main_v1/pydantic-1.10.15-py3-none-any.whl
