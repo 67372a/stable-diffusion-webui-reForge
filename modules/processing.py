@@ -77,9 +77,33 @@ def uncrop(image, dest_size, paste_loc):
     return image
 
 
-def apply_overlay(image, paste_loc, overlay):
+def apply_overlay_precise(image: Image.Image, paste_loc: tuple[int], overlay: tuple[Image.Image, np.ndarray]):
+    _overlay, _mask = overlay
+
+    if paste_loc is not None:
+        image = uncrop(image, (_overlay.width, _overlay.height), paste_loc)
+
+    original_denoised_image = image.copy()
+
+    overlay_rgb = np.array(_overlay).astype(np.float32) / 255.0
+    image_np = np.array(image).astype(np.float32) / 255.0
+    image_rgb = image_np[:, :, :3]
+
+    _mask = np.expand_dims(_mask, axis=-1)
+    final = image_rgb * _mask + overlay_rgb * (1.0 - _mask)
+
+    _image = np.clip((final * 255.0).round(), 0, 255).astype(np.uint8)
+    image = Image.fromarray(_image)
+
+    return image, original_denoised_image
+
+
+def apply_overlay(image: Image.Image, paste_loc: tuple[int], overlay: Image.Image):
     if overlay is None:
         return image, image.copy()
+
+    if opts.img2img_inpaint_precise_mask:
+        return apply_overlay_precise(image, paste_loc, overlay)
 
     if paste_loc is not None:
         image = uncrop(image, (overlay.width, overlay.height), paste_loc)
@@ -1676,6 +1700,11 @@ class StableDiffusionProcessingImg2Img(StableDiffusionProcessing):
                 np_mask = cv2.GaussianBlur(np_mask, (1, kernel_size), self.mask_blur_y)
                 image_mask = Image.fromarray(np_mask)
 
+            if opts.img2img_inpaint_precise_mask and self.mask_blur_x * self.mask_blur_y > 0:
+                _np_mask = np.array(image_mask).astype(np.float32) / 255.0
+                kernel_size = 2 * int(2.5 * self.mask_blur_x + 0.5) + 1
+                _image_mask = cv2.GaussianBlur(_np_mask, (kernel_size, kernel_size), self.mask_blur_x)
+
             if self.mask_blur_x > 0 or self.mask_blur_y > 0:
                 self.extra_generation_params["Mask blur"] = self.mask_blur
 
@@ -1731,10 +1760,12 @@ class StableDiffusionProcessingImg2Img(StableDiffusionProcessing):
             if image_mask is not None:
                 if self.mask_for_overlay.size != (image.width, image.height):
                     self.mask_for_overlay = images.resize_image(self.resize_mode, self.mask_for_overlay, image.width, image.height)
-                image_masked = Image.new('RGBa', (image.width, image.height))
-                image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(self.mask_for_overlay.convert('L')))
-
-                self.overlay_images.append(image_masked.convert('RGBA'))
+                if opts.img2img_inpaint_precise_mask:
+                    self.overlay_images.append((image, _image_mask))
+                else:
+                    image_masked = Image.new('RGBa', (image.width, image.height))
+                    image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(self.mask_for_overlay.convert('L')))
+                    self.overlay_images.append(image_masked.convert('RGBA'))
 
             # crop_region is not None if we are doing inpaint full res
             if crop_region is not None:
