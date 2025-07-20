@@ -1,23 +1,20 @@
-# reForge development has stopped.
-
-For more info, see https://github.com/Panchovix/stable-diffusion-webui-reForge/discussions/354
-
 # Stable Diffusion WebUI Forge/reForge
 
 Stable Diffusion WebUI Forge/reForge is a platform on top of [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) (based on [Gradio](https://www.gradio.app/)) to make development easier, optimize resource management, speed up inference, and study experimental features.
 
 The name "Forge" is inspired from "Minecraft Forge". This project is aimed at becoming SD WebUI's Forge.
 
+# 2025-07-19: reForge development will continue (for now).
+
+See more: https://github.com/Panchovix/stable-diffusion-webui-reForge/discussions/377
+
 # Important: Branches
 
 * main: Has all the possible upstream changes from A1111, new samplers/schedulers/sd options/etc and now, comfy backend updated to stream, so this deprecated the old forge backend.
-* dev: At this point (2025-03-13), it is the same as main branch.
-* dev2: Same as dev branch, but it uses gradio 4.0 instead of 3.42. This is to test some extensions and changes, then it will be moved to dev, and then to main branch.
-* experimental: This branch will have some experimental changes that may have major new features, but they may be incomplete or have major bugs, based on the dev2 branch. This branch will be mostly inactive until I want to test things.
+* dev: At this point (2025-07-20), it is the same as main branch.
+* dev2 and experimental: More unstable than dev, for now same as dev.
+* experimental: same as dev2 but with gradio 4.
 * main-old: Branch with old forge backend. Kept as backup in any case, but it won't receive updates.
-* dev_upstream: Deprecated, see more https://github.com/Panchovix/stable-diffusion-webui-reForge/discussions/175
-* dev_upsteam_experimental: Deprecated, see more https://github.com/Panchovix/stable-diffusion-webui-reForge/discussions/175
-* main_new_forge: Deprecated, see more https://github.com/lllyasviel/stable-diffusion-webui-forge/discussions/981.
 
 # Installing Forge/reForge
 
@@ -29,7 +26,7 @@ If you know what you are doing, you can install Forge/reForge using same method 
 ```bash
 git clone https://github.com/Panchovix/stable-diffusion-webui-reForge.git
 cd stable-diffusion-webui-reForge
-git checkout dev
+git checkout main
 ```
 Then run webui-user.bat (Windows) or webui-user.sh (Linux, for this one make sure to uncomment the lines according of your folder, paths and setting you need).
 
@@ -47,7 +44,7 @@ For Windows CMD, it would be:
 ```bash
 git clone https://github.com/Panchovix/stable-diffusion-webui-reForge.git
 cd stable-diffusion-webui-reForge
-git checkout dev
+git checkout main
 ren requirements_versions.txt requirements_versions_backup.txt
 copy requirements_versions_legacy.txt requirements_versions.txt
 ```
@@ -57,7 +54,7 @@ Windows PS1
 ```bash
 git clone https://github.com/Panchovix/stable-diffusion-webui-reForge.git
 cd stable-diffusion-webui-reForge
-git checkout dev
+git checkout main
 Rename-Item requirements_versions.txt requirements_versions_backup.txt
 Copy-Item requirements_versions_legacy.txt requirements_versions.txt
 ```
@@ -69,14 +66,14 @@ Tutorial from: https://github.com/continue-revolution/sd-webui-animatediff/blob/
 If you have already had OG A1111 and you are familiar with git, An option is go to `/path/to/stable-diffusion-webui` and
 ```bash
 git remote add reForge https://github.com/Panchovix/stable-diffusion-webui-reForge
-git branch Panchovix/dev
-git checkout Panchovix/dev
+git branch Panchovix/main
+git checkout Panchovix/main
 git fetch reForge
-git branch -u reForge/dev
+git branch -u reForge/main
 git stash
 git pull
 ```
-To go back to OG A1111, just do `git checkout master` or `git checkout dev`.
+To go back to OG A1111, just do `git checkout master` or `git checkout main`.
 
 If you got stuck in a merge to resolve conflicts, you can go back with `git merge --abort`
 
