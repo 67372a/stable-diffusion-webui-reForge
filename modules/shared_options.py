@@ -805,6 +805,7 @@ options_templates.update(options_section(('postprocessing', "Postprocessing", "p
     'postprocessing_operation_order': OptionInfo([], "Postprocessing operation order", ui_components.DropdownMulti, lambda: {"choices": [x.name for x in shared_items.postprocessing_scripts(filter_out_main_ui_only=True)]}),
     'upscaling_max_images_in_cache': OptionInfo(5, "Maximum number of images in upscaling cache", gr.Slider, {"minimum": 0, "maximum": 10, "step": 1}),
     'postprocessing_existing_caption_action': OptionInfo("Ignore", "Action for existing captions", gr.Radio, {"choices": ["Ignore", "Keep", "Prepend", "Append"]}).info("when generating captions using postprocessing; Ignore = use generated; Keep = use original; Prepend/Append = combine both"),
+    "composite_tiles_on_gpu": OptionInfo(False, "Composite tiles on GPU").info("reduces memory usage and improves performance"),
 }))
 
 options_templates.update(options_section((None, "Hidden options"), {
