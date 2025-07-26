@@ -423,6 +423,18 @@ def list_unets_callback():
     return res
 
 
+def list_text_encoders_callback():
+    res = []
+
+    for c in ordered_callbacks('list_text_encoders'):
+        try:
+            c.callback(res)
+        except Exception:
+            report_exception(c, 'list_text_encoders')
+
+    return res
+
+
 def before_token_counter_callback(params: BeforeTokenCounterParams):
     for c in ordered_callbacks('before_token_counter'):
         try:
