@@ -986,7 +986,33 @@ def get_empty_cond(sd_model):
     if hasattr(sd_model, 'get_learned_conditioning'):
         d = sd_model.get_learned_conditioning([""])
     else:
-        d = sd_model.cond_stage_model([""])
+        # Handle different types of cond_stage_model
+        cond_stage_model = sd_model.cond_stage_model
+        
+        # Check if this is an SDXL model with SGM-based conditioner
+        if hasattr(cond_stage_model, 'embedders') and hasattr(cond_stage_model, '__call__'):
+            # This is an SGM GeneralConditioner - use SDXL conditioning format
+            try:
+                # Try the new ldm_patched approach first
+                d = sd_model.get_learned_conditioning([""])
+            except:
+                # Fallback to SGM format for compatibility
+                import torch
+                from modules import devices
+                
+                # Create SDXL conditioning input format that SGM expects
+                device_args = dict(device=devices.device, dtype=torch.float32)
+                sdxl_conds = {
+                    "txt": [""],
+                    "original_size_as_tuple": torch.tensor([1024, 1024], **device_args).repeat(1, 1),
+                    "crop_coords_top_left": torch.tensor([0, 0], **device_args).repeat(1, 1),
+                    "target_size_as_tuple": torch.tensor([1024, 1024], **device_args).repeat(1, 1),
+                    "aesthetic_score": torch.tensor([6.0], **device_args).repeat(1, 1),
+                }
+                d = cond_stage_model(sdxl_conds, force_zero_embeddings=['txt'])
+        else:
+            # Regular SD1.5/SD2.x model
+            d = cond_stage_model([""])
 
     if isinstance(d, dict):
         d = d['crossattn']
@@ -1078,22 +1104,32 @@ def aggressive_memory_cleanup():
     
     return f"Memory cleanup complete. Current usage: {mem_info.rss/(1024*1024*1024):.2f} GB"
 
-def load_model(checkpoint_info=None, already_loaded_state_dict=None):
+def load_model(checkpoint_info=None, already_loaded_state_dict=None, forced_reload=False):
     import logging as log
     global model_data
 
     checkpoint_info = checkpoint_info or select_checkpoint()
     timer = Timer()
 
-    # Check if the model is already loaded
-    for i, loaded_model in enumerate(model_data.loaded_sd_models):
-        if loaded_model.filename == checkpoint_info.filename:
-            log.debug(f"Using already loaded model {loaded_model.sd_checkpoint_info.title}")
-            # Set this model as active by moving it to the front
-            model_data.loaded_sd_models.remove(loaded_model)
-            model_data.loaded_sd_models.insert(0, loaded_model)
-            model_data.set_sd_model(loaded_model, already_loaded=True)
-            return loaded_model
+    # Check if the model is already loaded (skip this check if forced_reload is True)
+    if not forced_reload:
+        for i, loaded_model in enumerate(model_data.loaded_sd_models):
+            if loaded_model.filename == checkpoint_info.filename:
+                log.debug(f"Using already loaded model {loaded_model.sd_checkpoint_info.title}")
+                # Set this model as active by moving it to the front
+                model_data.loaded_sd_models.remove(loaded_model)
+                model_data.loaded_sd_models.insert(0, loaded_model)
+                model_data.set_sd_model(loaded_model, already_loaded=True)
+                return loaded_model
+    else:
+        # For forced reload, remove any existing model with the same filename first
+        for i, loaded_model in enumerate(model_data.loaded_sd_models):
+            if loaded_model.filename == checkpoint_info.filename:
+                print(f"Forced reload: Unloading existing model {loaded_model.sd_checkpoint_info.title}")
+                model_data.loaded_sd_models.remove(loaded_model)
+                # Completely unload the existing model
+                complete_model_teardown(loaded_model)
+                break
 
     # Enforce model limit
     while len(model_data.loaded_sd_models) >= shared.opts.sd_checkpoints_limit:
@@ -1144,6 +1180,17 @@ def load_model(checkpoint_info=None, already_loaded_state_dict=None):
 
         script_callbacks.model_loaded_callback(sd_model)
         timer.record("scripts callbacks")
+
+        try:
+            from modules import sd_text_encoder
+            # Only apply text encoder if we haven't already loaded a separate one during model loading
+            if not hasattr(sd_model, '_separate_te_loaded'):
+                sd_text_encoder.apply_text_encoder()
+            else:
+                print("Skipping apply_text_encoder() - separate TE already loaded during model initialization")
+            timer.record("apply text encoder")
+        except Exception as e:
+            print(f"Warning: Error applying text encoder: {e}")
 
         with torch.no_grad():
             sd_model.cond_stage_model_empty_prompt = get_empty_cond(sd_model)
@@ -1231,7 +1278,7 @@ def reuse_model_from_already_loaded(sd_model, checkpoint_info, timer):
 
 
 def reload_model_weights(sd_model=None, info=None, forced_reload=False):
-    return load_model(info)
+    return load_model(info, forced_reload=forced_reload)
 
 
 def unload_model_weights(model=None):
@@ -1347,7 +1394,7 @@ def apply_token_merging(sd_model, token_merging_ratio):
 
     print(f'token_merging_ratio = {token_merging_ratio}')
 
-    from ldm_patched.contrib.external_tomesd import TomePatcher
+    from ldm_patched.contrib.nodes_tomesd import TomePatcher
 
     sd_model.forge_objects.unet = TomePatcher().patch(
         model=sd_model.forge_objects.unet,
