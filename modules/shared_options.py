@@ -205,6 +205,7 @@ options_templates.update(options_section(('sd', "Stable Diffusion", "sd"), {
     "tiling": OptionInfo(False, "Tiling", infotext='Tiling').info("produce a tileable picture"),
     "hires_fix_refiner_pass": OptionInfo("second pass", "Hires fix: which pass to enable refiner for", gr.Radio, {"choices": ["first pass", "second pass", "both passes"]}, infotext="Hires refiner"),
     "cond_stage_model_device_compatibility_check": OptionInfo(False, "Perform device compatibility check for conditional stage model. Enables broader hardware compatibility by falling back to CPU if GPU doesn't support required data types. May improve stability on some systems, but can significantly slow down model loading and potentially impact generation speed.", gr.Checkbox, {"interactive": True}),
+    "reflective_padding_vae_sd": OptionInfo("Disabled", "Enables or disables reflective vae padding, for models/VAEs like MS-LC-EQ-D-VR VAE", gr.Radio, {"choices": ["Disabled", "Enabled"]}, infotext="reflective vae padding"),
 }))
 
 options_templates.update(options_section(('sdxl', "Stable Diffusion XL", "sd"), {
@@ -247,6 +248,11 @@ options_templates.update(options_section(('sd_sampling', "SD Sampling backend fo
         <p><strong>ldm patched (Comfy):</strong> Uses the implementation of ldm_patched.k_diffusion to use on A1111 samplers. It does add more determinism and optimizations to samplers. Uses latest code but can change the results not as expected<br>
         """
     ),
+}))
+
+options_templates.update(options_section(('epsilon_scaling', "Epsilon Scaling", "sd"), {
+    "epsilon_scaling_enabled": OptionInfo(False, "Enable epsilon scaling").info("Scale the guided prediction to mitigate exposure bias during sampling."),
+    "epsilon_scaling_factor": OptionInfo(1.005, "Epsilon scaling factor", gr.Slider, {"minimum": 0.5, "maximum": 1.5, "step": 0.001}).info("Noise scaling multiplier from 'Elucidating the Exposure Bias in Diffusion Models'."),
 }))
 
 options_templates.update(options_section(('img2img', "img2img", "sd"), {
