@@ -8,7 +8,7 @@ diskcache==5.6.3
 einops==0.8.0
 facexlib==0.3.0
 fastapi==0.94.0
-gradio==3.41.2
+gradio==6.7.0
 httpcore==0.15
 inflection==0.5.1
 jsonmerge==1.9.2
